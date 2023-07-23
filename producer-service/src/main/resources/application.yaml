@@ -1,0 +1,14 @@
+server:
+  port: 8090
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+producer-app:
+  consumer-server-url: "localhost"
+  consumer-server-port: 9003
+
+logging:
+  level:
+    root: info
