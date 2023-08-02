@@ -5,6 +5,8 @@ import a.gleb.producer.model.MessageResponse
 import a.gleb.producer.service.UserMessageService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import kotlinx.coroutines.flow.Flow
+import org.springframework.http.MediaType.APPLICATION_NDJSON_VALUE
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -44,8 +46,8 @@ class ProducerAppRestController(
     @Operation(
         summary = "Create new messages"
     )
-    @PostMapping("/create-messages")
-    suspend fun createMessages(@RequestBody messageRequestList: List<MessageRequest>): List<MessageResponse> {
+    @PostMapping("/create-messages", produces = [APPLICATION_NDJSON_VALUE])
+    fun createMessages(@RequestBody messageRequestList: List<MessageRequest>): Flow<MessageResponse> {
         return userMessageService.createMessages(messageRequestList)
     }
 
@@ -60,8 +62,8 @@ class ProducerAppRestController(
     @Operation(
         summary = "Find last messages with limits"
     )
-    @GetMapping("/get-messages")
-    suspend fun getMessages(@RequestParam limit: Int): List<MessageResponse> {
+    @GetMapping("/get-messages", produces = [APPLICATION_NDJSON_VALUE])
+    fun getMessages(@RequestParam limit: Int): Flow<MessageResponse> {
         return userMessageService.getMessagesWithLimits(limit)
     }
 }

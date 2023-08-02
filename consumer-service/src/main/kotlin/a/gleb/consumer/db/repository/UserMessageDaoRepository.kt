@@ -9,5 +9,5 @@ import java.util.*
 interface UserMessageDaoRepository: CoroutineCrudRepository<UserMessageDao, UUID> {
 
     @Query("select * from user_message um order by um.last_update limit :limiting")
-    suspend fun findLastUserMessageByLastUpdateAndLimit(limiting: Int): Flow<UserMessageDao?>
+    fun findLastUserMessageByLastUpdateAndLimit(limiting: Int): Flow<UserMessageDao?>
 }

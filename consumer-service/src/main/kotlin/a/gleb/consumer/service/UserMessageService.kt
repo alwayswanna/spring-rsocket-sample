@@ -9,11 +9,10 @@ import a.gleb.consumer.mapper.UserMessageMapper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.onCompletion
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.util.*
-import kotlin.math.log
 
 @Service
 class UserMessageService(
@@ -32,18 +31,14 @@ class UserMessageService(
         return personMessageResponse
     }
 
-    suspend fun saveAll(personMessageRequestList: List<PersonMessageRequest>): Flow<PersonMessageResponse?> {
+    fun saveAll(personMessageRequestList: Flow<PersonMessageRequest>): Flow<PersonMessageResponse?> {
         logger.info { "Start save user messages" }
 
-        val userMessageDaoList = personMessageRequestList.asFlow()
-            .map { messageMapper.toUserMessageDao(it) }
-            .toList()
+        val userMessageDaoList = personMessageRequestList.map { messageMapper.toUserMessageDao(it) }
         val savedUserMessagesDaoList = userMessageDaoRepository.saveAll(userMessageDaoList)
-        val userMessageResponsesList = savedUserMessagesDaoList
+        return savedUserMessagesDaoList
             .map { messageMapper.toPersonMessageResponse(it) }
-
-        logger.info { "Successfully save user messages" }
-        return userMessageResponsesList
+            .onCompletion { logger.info { "Successfully save user messages" } }
     }
 
     suspend fun getMessage(id: UUID): PersonMessageResponse? {
@@ -56,10 +51,10 @@ class UserMessageService(
         return userMessageResponse
     }
 
-    suspend fun deleteMessage(id: UUID) {
+    suspend fun deleteMessage(id: UUID): Mono<Unit> {
         logger.info { "Delete message with id: $id" }
-        userMessageDaoRepository.deleteById(id)
-        logger.info { "Successfully delete message by id: $id" }
+        return Mono.just(userMessageDaoRepository.deleteById(id))
+            .doOnSuccess { logger.info { "Successfully delete message by id: $id" } }
     }
 
     suspend fun updateUserMessage(personMessageRequest: PersonMessageRequest): PersonMessageResponse? {
@@ -76,13 +71,11 @@ class UserMessageService(
         return userMessageResponse
     }
 
-    suspend fun findLastMessageByLastUpdateAndLimit(limiting: Int): Flow<PersonMessageResponse?> {
+    fun findLastMessageByLastUpdateAndLimit(limiting: Int): Flow<PersonMessageResponse?> {
         logger.info { "Start find last $limiting messages by last_update" }
 
-        val response = userMessageDaoRepository.findLastUserMessageByLastUpdateAndLimit(limiting)
+        return userMessageDaoRepository.findLastUserMessageByLastUpdateAndLimit(limiting)
             .map { messageMapper.toPersonMessageResponse(it) }
-
-        logger.info { "Successfully find messages" }
-        return response
+            .onCompletion { logger.info { "Successfully find messages" } }
     }
 }

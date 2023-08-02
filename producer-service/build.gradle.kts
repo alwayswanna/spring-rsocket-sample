@@ -11,6 +11,7 @@ dependencies {
     /* spring */
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-rsocket")
+    implementation("org.springframework.boot:spring-boot-starter-security")
 
     /* kotlin */
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")

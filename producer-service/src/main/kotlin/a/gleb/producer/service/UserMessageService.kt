@@ -5,10 +5,7 @@ import a.gleb.producer.logger
 import a.gleb.producer.mapper.MessageMapper
 import a.gleb.producer.model.MessageRequest
 import a.gleb.producer.model.MessageResponse
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.asFlow
 import org.springframework.messaging.rsocket.RSocketRequester
 import org.springframework.messaging.rsocket.retrieveFlux
@@ -48,8 +45,8 @@ class UserMessageService(
         logger.info { "Start delete message by with id=$messageId" }
 
         rsocketRequester.route(DELETE_MESSAGE).data(messageId)
-
-        logger.info { "End delete message with id=$messageId" }
+            .retrieveMono<Unit>()
+            .subscribe { logger.info { "End delete message with id=$messageId" } }
     }
 
     suspend fun createMessage(messageRequest: MessageRequest): MessageResponse {
@@ -82,31 +79,25 @@ class UserMessageService(
         return response
     }
 
-    suspend fun createMessages(messageRequestList: List<MessageRequest>): List<MessageResponse> {
+    fun createMessages(messageRequestList: List<MessageRequest>): Flow<MessageResponse> {
         logger.info { "Start create new messages" }
 
-        val response = messageRequestList.asFlow()
-            .map { messageMapper.toPersonMessageRequest(it) }
-            .map { rsocketRequester.route(CREATE_MESSAGES).data(it).retrieveFlux<PersonMessageResponse>().asFlow() }
-            .map { messageMapper.toMessageResponse(it.first()) }
-            .toList()
-        logger.info { "End create new messages" }
-
-        return response
+        return rsocketRequester.route(CREATE_MESSAGES)
+            .data(messageRequestList.asFlow().map { messageMapper.toPersonMessageRequest(it) })
+            .retrieveFlux<PersonMessageResponse>()
+            .asFlow()
+            .map { messageMapper.toMessageResponse(it) }
+            .onCompletion { logger.info { "End create new messages" } }
     }
 
-    suspend fun getMessagesWithLimits(limit: Int): List<MessageResponse> {
+    fun getMessagesWithLimits(limit: Int): Flow<MessageResponse> {
         logger.info { "Start get messages with limit $limit" }
 
-        val response = rsocketRequester.route(GET_MESSAGES_WITH_LIMIT)
+        return rsocketRequester.route(GET_MESSAGES_WITH_LIMIT)
             .data(limit)
             .retrieveFlux<PersonMessageResponse>()
             .asFlow()
             .map { messageMapper.toMessageResponse(it) }
-            .toList()
-
-        logger.info { "End get messages with limit ${response.size}" }
-
-        return response
+            .onCompletion { logger.info { "End get messages with limit" } }
     }
 }

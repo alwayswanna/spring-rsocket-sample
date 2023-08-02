@@ -8,6 +8,15 @@ springdoc:
 producer-app:
   consumer-server-url: "localhost"
   consumer-server-port: 9003
+  cors:
+    enabled: true
+    allowed-origins:
+      - "*"
+    allowed-origins-all: true
+    allowed-methods:
+      - "*"
+    allowed-headers:
+      - "*"
 
 logging:
   level:

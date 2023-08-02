@@ -32,17 +32,15 @@ class FileUserMessageService(
         logger.info { "Start upload file" }
 
         val inputStream = dataBufferFlow.map { it.asInputStream(true) }
-            .reduce { acc, i -> SequenceInputStream(acc, i) }
+            .reduce{acc, i -> SequenceInputStream(acc, i)}
 
-        val response = XSSFWorkbook(inputStream).getSheetAt(SHEET_INDEX)
+        return XSSFWorkbook(inputStream).getSheetAt(SHEET_INDEX)
             .asFlow()
             .filter { it.rowNum > 0 }
             .map { mapToUserMessageDao(it) }
             .map { userMessageDaoRepository.save(it) }
             .map { messageMapper.toPersonMessageResponse(it) }
-
-        logger.info { "Successfully upload file" }
-        return response
+            .onCompletion { logger.info { "Successfully upload file" } }
     }
 
     private suspend fun mapToUserMessageDao(row: Row): UserMessageDao {

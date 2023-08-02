@@ -6,6 +6,7 @@ import a.gleb.consumer.service.UserMessageService
 import kotlinx.coroutines.flow.Flow
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.stereotype.Controller
+import reactor.core.publisher.Mono
 import java.util.*
 
 @Controller
@@ -19,7 +20,7 @@ class UserMessageController(
     }
 
     @MessageMapping("save-all")
-    suspend fun saveAll(personMessageRequestList: List<PersonMessageRequest>): Flow<PersonMessageResponse?> {
+    fun saveAll(personMessageRequestList: Flow<PersonMessageRequest>): Flow<PersonMessageResponse?> {
         return userMessageService.saveAll(personMessageRequestList)
     }
 
@@ -34,12 +35,12 @@ class UserMessageController(
     }
 
     @MessageMapping("delete-message")
-    suspend fun deleteMessage(messageId: UUID) {
+    suspend fun deleteMessage(messageId: UUID): Mono<Unit> {
         return userMessageService.deleteMessage(messageId)
     }
 
     @MessageMapping("find-last-messages")
-    suspend fun findLastMessages(limiting: Int): Flow<PersonMessageResponse?> {
+    fun findLastMessages(limiting: Int): Flow<PersonMessageResponse?> {
         return userMessageService.findLastMessageByLastUpdateAndLimit(limiting)
     }
 

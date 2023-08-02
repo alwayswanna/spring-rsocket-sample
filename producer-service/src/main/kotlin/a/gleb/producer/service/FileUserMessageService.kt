@@ -6,6 +6,7 @@ import a.gleb.producer.mapper.MessageMapper
 import a.gleb.producer.model.MessageResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.reactive.asFlow
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.messaging.rsocket.RSocketRequester
@@ -20,17 +21,14 @@ class FileUserMessageService(
     private val rsocketRequester: RSocketRequester
 ) {
 
-    suspend fun uploadFile(file: FilePart): Flow<MessageResponse?> {
+    fun uploadFile(file: FilePart): Flow<MessageResponse?> {
         logger.info { "Start upload file ${file.filename()}" }
 
-        val response = rsocketRequester.route(UPLOAD_FILE)
+        return rsocketRequester.route(UPLOAD_FILE)
             .data(file.content().asFlow())
             .retrieveFlux<PersonMessageResponse>()
             .asFlow()
             .map { messageMapper.toMessageResponse(it) }
-
-        logger.info { "End upload file ${file.filename()}" }
-
-        return response
+            .onCompletion { logger.info { "End upload file ${file.filename()}" } }
     }
 }

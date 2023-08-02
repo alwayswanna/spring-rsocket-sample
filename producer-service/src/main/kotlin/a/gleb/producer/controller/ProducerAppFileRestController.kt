@@ -5,7 +5,8 @@ import a.gleb.producer.service.FileUserMessageService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import kotlinx.coroutines.flow.Flow
-import org.springframework.http.MediaType
+import org.springframework.http.MediaType.APPLICATION_NDJSON_VALUE
+import org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -24,8 +25,8 @@ class ProducerAppFileRestController(
     @Operation(
         summary = "Upload message from file .xlsx"
     )
-    @PostMapping("/file", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    suspend fun uploadFile(@RequestPart file: FilePart): Flow<MessageResponse?> {
+    @PostMapping("/file", consumes = [MULTIPART_FORM_DATA_VALUE], produces = [APPLICATION_NDJSON_VALUE])
+    fun uploadFile(@RequestPart file: FilePart): Flow<MessageResponse?> {
         return fileUserMessageService.uploadFile(file)
     }
 }
